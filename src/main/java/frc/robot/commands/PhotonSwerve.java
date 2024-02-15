@@ -12,6 +12,7 @@ import frc.robot.Constants;
 import frc.robot.SwerveModule;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -37,22 +38,23 @@ public class PhotonSwerve extends Command{
     Pose2d pose2d;
     Pose3d pose3d;
 
-    private static final int TAG_TO_CHASE = 2;
+    //Tag ID
+    private static final int TAG_TO_CHASE = 3;
     private static final Transform3d TAG_TO_GOAL = 
       new Transform3d(
           new Translation3d(1.5, 0.0, 0.0),
           new Rotation3d(0.0, 0.0, Math.PI));
 
-    PIDController xPidController;
-    PIDController yPidController;
-    PIDController thController;
+    ProfiledPIDController xPidController;
+    ProfiledPIDController yPidController;
+    ProfiledPIDController thController;
 
     Supplier<Pose2d> poseSupplier;
 
     private PhotonTrackedTarget lastTarget;
 
-    public PhotonSwerve(PhotonCamera camera, PIDController xController,
-     PIDController yController, PIDController thController, Supplier<Pose2d> ps)  
+    public PhotonSwerve(PhotonCamera camera, ProfiledPIDController xController,
+     ProfiledPIDController yController, ProfiledPIDController thController, Supplier<Pose2d> ps)  
     {
         this.camera = camera;
         this.poseSupplier = ps;
@@ -67,16 +69,16 @@ public class PhotonSwerve extends Command{
         this.thController.enableContinuousInput(Math.PI, Math.PI);
     }
 
-    
+
 
     @Override
     public void initialize() 
     {
         lastTarget = null;
         var robotPose = poseSupplier.get();
-        thController.reset();
-        xPidController.reset();
-        yPidController.reset();
+        thController.reset(robotPose.getRotation().getRadians());
+        xPidController.reset(robotPose.getX());
+        yPidController.reset(robotPose.getY());
     }
 
     @Override 
@@ -113,9 +115,9 @@ public class PhotonSwerve extends Command{
             var goalPose = targetPose.transformBy(TAG_TO_GOAL).toPose2d();
     
             // Drive
-            xPidController.setSetpoint(goalPose.getX());
-            yPidController.setSetpoint(goalPose.getY());
-            thController.setSetpoint(goalPose.getRotation().getRadians());
+            xPidController.setGoal(goalPose.getX());
+            yPidController.setGoal(goalPose.getY());
+            thController.setGoal(goalPose.getRotation().getRadians());
           }
         }
     }

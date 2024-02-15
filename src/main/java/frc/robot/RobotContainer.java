@@ -1,6 +1,7 @@
 package frc.robot;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -181,7 +182,7 @@ public class RobotContainer {
    
     public final PhotonSwerve m_photonCommand = new PhotonSwerve(
         photonSubsystem.getCamera(), 
-        null, 
+        new ProfiledPIDController(translationAxis, strafeAxis, rotationAxis, null), 
         null, 
         null, 
         null);
