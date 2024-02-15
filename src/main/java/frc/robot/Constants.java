@@ -236,7 +236,7 @@ public final class Constants {
 
         //Added Photon TODO: Change
         public static final Transform3d CAMERA_TO_ROBOT =
-        new Transform3d(new Translation3d(-0.3425, 0.0, -0.233), new Rotation3d());
+        new Transform3d(new Translation3d(Units.inchesToMeters(-0.06), Units.inchesToMeters(0.0), Units.inchesToMeters(-15.5)), new Rotation3d()); //offset 0.06, x: 15.5
         public static final Transform3d ROBOT_TO_CAMERA = CAMERA_TO_ROBOT.inverse();
     }
 

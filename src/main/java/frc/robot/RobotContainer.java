@@ -182,10 +182,11 @@ public class RobotContainer {
    
     public final PhotonSwerve m_photonCommand = new PhotonSwerve(
         photonSubsystem.getCamera(), 
-        new ProfiledPIDController(translationAxis, strafeAxis, rotationAxis, null), 
-        null, 
-        null, 
-        null);
+        new ProfiledPIDController(0, 0, 0, null), 
+        new ProfiledPIDController(0, 0, 0, null), 
+        new ProfiledPIDController(0, 0, 0, null), 
+        s_Swerve.getPose(),
+        s_Swerve);
 
 
     public final IntakeCone s_IntakeCone = new IntakeCone(s_ElevatorSubsystem, s_IntakeSubsystem);

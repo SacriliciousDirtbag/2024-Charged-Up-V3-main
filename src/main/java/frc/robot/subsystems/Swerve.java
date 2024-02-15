@@ -146,6 +146,11 @@ public class Swerve extends SubsystemBase {
     }
 
 
-    public void drive(Rotation2d rotation2d, double x, boolean fieldRelative, boolean isOpenLoop) {
+    public void setModStates(SwerveModuleState[] state){
+        var count = 0; //# of mods
+        for(SwerveModule mod : mSwerveMods){
+            mod.setDesiredState(state[count], false);
+            count++;
+        }
     }
 }

@@ -6,10 +6,14 @@ import java.util.function.Supplier;
 import org.photonvision.PhotonCamera;
 import org.photonvision.targeting.PhotonTrackedTarget;
 
+import com.ctre.phoenix6.sim.ChassisReference;
 import com.fasterxml.jackson.core.TreeNode;
 
 import frc.robot.Constants;
 import frc.robot.SwerveModule;
+import frc.robot.subsystems.Swerve;
+
+import java.util.stream.IntStream;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -20,7 +24,9 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -35,8 +41,8 @@ public class PhotonSwerve extends Command{
     PIDController movementController;
     PhotonCamera camera;
     
-    Pose2d pose2d;
-    Pose3d pose3d;
+    Pose2d robPose2d;
+    Pose3d robotPose;
 
     //Tag ID
     private static final int TAG_TO_CHASE = 3;
@@ -52,12 +58,14 @@ public class PhotonSwerve extends Command{
     Supplier<Pose2d> poseSupplier;
 
     private PhotonTrackedTarget lastTarget;
+    private Swerve swerve;
 
     public PhotonSwerve(PhotonCamera camera, ProfiledPIDController xController,
-     ProfiledPIDController yController, ProfiledPIDController thController, Supplier<Pose2d> ps)  
+     ProfiledPIDController yController, ProfiledPIDController thController, Supplier<Pose2d> ps, Swerve Swerve)  
     {
         this.camera = camera;
         this.poseSupplier = ps;
+        this.swerve = Swerve;
 
         this.xPidController = xController;
         this.yPidController = yController;
@@ -118,7 +126,50 @@ public class PhotonSwerve extends Command{
             xPidController.setGoal(goalPose.getX());
             yPidController.setGoal(goalPose.getY());
             thController.setGoal(goalPose.getRotation().getRadians());
-          }
+
+            double xSpeed = xPidController.calculate(robotPose.getX());
+            if (xPidController.atGoal()) {
+              xSpeed = 0;
+            }
+      
+            double ySpeed = yPidController.calculate(robotPose.getY());
+            if (yPidController.atGoal()) {
+              ySpeed = 0;
+            }
+      
+            double omegaSpeed = thController.calculate(robotPose2d.getRotation().getRadians());
+            if (thController.atGoal()) {
+              omegaSpeed = 0;
+            }
+      
+
+
+            ChassisSpeeds desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed,ySpeed,omegaSpeed,robotPose2d.getRotation());
+            SwerveModuleState[] modStates =  Constants.Swerve.swerveKinematics.toSwerveModuleStates(desiredChassisSpeeds);
+
+
+                 // Set the swerve module states
+    if (desiredChassisSpeeds != null) {
+        var currentStates = swerve.getModulePositions();
+        var desiredStates = Constants.Swerve.swerveKinematics.toSwerveModuleStates(desiredChassisSpeeds);
+  
+        if(desiredChassisSpeeds.vxMetersPerSecond == 0.0 && desiredChassisSpeeds.vyMetersPerSecond == 0.0
+            && desiredChassisSpeeds.omegaRadiansPerSecond == 0.0) {
+          // Keep the wheels at their current angle when stopped, don't snap back to straight
+          IntStream.range(0, currentStates.length).forEach(i -> desiredStates[i].angle = currentStates[i].angle);
         }
+  
+        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.Swerve.maxSpeed); 
+        swerve.setModStates(modStates);
+        // SwerveModulePosition[] newMods =  swerve.getModulePositions();
+      }
+      desiredChassisSpeeds = null;
+          }
+
+          
+        }
+
+
+     
     }
 }

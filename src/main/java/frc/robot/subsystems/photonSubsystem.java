@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
 import org.photonvision.targeting.PhotonPipelineResult;
+
 //PHOTONVISION IMPORTS
 import org.photonvision.targeting.PhotonTrackedTarget;
 import org.photonvision.*;
@@ -16,16 +17,21 @@ import java.util.Optional;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
+import edu.wpi.first.math.estimator.PoseEstimator;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.numbers.N5;
+import edu.wpi.first.math.numbers.N7;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -35,6 +41,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 
 public class photonSubsystem extends SubsystemBase{
   static PhotonCamera camera;
+  static SwerveDrivePoseEstimator poseEstimator;
   PhotonPipelineResult lf; //latest frame
   PhotonTrackedTarget ct; //current target
   Transform3d pti; //idk what this is arlen
@@ -45,7 +52,13 @@ public class photonSubsystem extends SubsystemBase{
   
   public photonSubsystem()
   {
+    
     camera = new PhotonCamera( "PhotonCamera1");
+    poseEstimator =  new SwerveDrivePoseEstimator(
+    Constants.Swerve.swerveKinematics, 
+    null, 
+    Swerve.getModulePositions(), 
+    null);
 
   }
 
