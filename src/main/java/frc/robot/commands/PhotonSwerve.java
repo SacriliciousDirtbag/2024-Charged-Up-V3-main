@@ -39,7 +39,7 @@ import frc.robot.Constants.cameraSettings;
 
 public class PhotonSwerve extends Command{
     PIDController movementController;
-    PhotonCamera camera;
+    photonSubsystem camera;
     
     Pose2d robPose2d;
     Pose3d robotPose;
@@ -60,7 +60,7 @@ public class PhotonSwerve extends Command{
     private PhotonTrackedTarget lastTarget;
     private Swerve swerve;
 
-    public PhotonSwerve(PhotonCamera camera, ProfiledPIDController xController,
+    public PhotonSwerve(photonSubsystem camera, ProfiledPIDController xController,
      ProfiledPIDController yController, ProfiledPIDController thController, Supplier<Pose2d> ps, Swerve Swerve)  
     {
         this.camera = camera;
@@ -159,7 +159,7 @@ public class PhotonSwerve extends Command{
           IntStream.range(0, currentStates.length).forEach(i -> desiredStates[i].angle = currentStates[i].angle);
         }
   
-        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.Swerve.maxSpeed); 
+        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.AutoConstants.kMaxSpeedMetersPerSecond);
         swerve.setModStates(modStates);
         // SwerveModulePosition[] newMods =  swerve.getModulePositions();
       }

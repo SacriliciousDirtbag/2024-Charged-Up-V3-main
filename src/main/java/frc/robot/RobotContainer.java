@@ -1,10 +1,15 @@
 package frc.robot;
 
+import org.photonvision.PhotonCamera;
+
+import com.fasterxml.jackson.databind.introspect.ConcreteBeanPropertyBase;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 
 //import java.util.function.BooleanSupplier;
 
@@ -180,12 +185,16 @@ public class RobotContainer {
     );
 
    
+    final static TrapezoidProfile.Constraints xContraints = new TrapezoidProfile.Constraints(Constants.AutoConstants.kMaxSpeedMetersPerSecond, Constants.AutoConstants.kMaxAccelerationMetersPerSecondSquared);
+    final static TrapezoidProfile.Constraints yContraints = new TrapezoidProfile.Constraints(Constants.AutoConstants.kMaxSpeedMetersPerSecond, Constants.AutoConstants.kMaxAccelerationMetersPerSecondSquared);
+    final static TrapezoidProfile.Constraints thContraints = new TrapezoidProfile.Constraints(Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond, Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond);
+
     public final PhotonSwerve m_photonCommand = new PhotonSwerve(
-        photonSubsystem.getCamera(), 
-        new ProfiledPIDController(0, 0, 0, null), 
-        new ProfiledPIDController(0, 0, 0, null), 
-        new ProfiledPIDController(0, 0, 0, null), 
-        s_Swerve.getPose(),
+        new photonSubsystem(s_Swerve), 
+        new ProfiledPIDController(Constants.AutoConstants.kp, 0, 0, xContraints), 
+        new ProfiledPIDController(Constants.AutoConstants.kp, 0, 0, yContraints), 
+        new ProfiledPIDController(Constants.AutoConstants.kPThetaController, 0, 0, thContraints), 
+        s_Swerve::getPose,
         s_Swerve);
 
 

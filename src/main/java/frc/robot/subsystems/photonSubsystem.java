@@ -50,31 +50,34 @@ public class photonSubsystem extends SubsystemBase{
   final double cpr = 0; //camera pitch radians
   double distance;
   
-  public photonSubsystem()
+  public photonSubsystem(Swerve s_Swerve)
   {
     
     camera = new PhotonCamera( "PhotonCamera1");
     poseEstimator =  new SwerveDrivePoseEstimator(
     Constants.Swerve.swerveKinematics, 
-    null, 
-    Swerve.getModulePositions(), 
-    null);
-
+    s_Swerve.getYaw(),
+    s_Swerve.getModulePositions(), 
+    s_Swerve.getPose()
+    );
   }
 
   @Override
   public void periodic()
   {
-    lf = camera.getLatestResult();
-    if(lf.hasTargets())
-    {
-      ct = lf.getBestTarget();
-      distance = PhotonUtils.calculateDistanceToTargetMeters(
-        chog, 
-        thog, 
-        cpr, 
-        Units.degreesToRadians(ct.getYaw()));
-    }
+    // lf = camera.getLatestResult();
+    // if(lf.hasTargets())
+    // {
+    //   ct = lf.getBestTarget();
+    //   distance = PhotonUtils.calculateDistanceToTargetMeters(
+    //     chog, 
+    //     thog, 
+    //     cpr, 
+    //     Units.degreesToRadians(ct.getYaw()));
+    // }
+
+    
+    
   }
 
   public double getYaw()
