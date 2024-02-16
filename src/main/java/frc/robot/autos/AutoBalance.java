@@ -35,7 +35,7 @@ public class AutoBalance extends CommandBase {
             s_Swerve.drive(new Translation2d(x - 0.1,0), 0, true, true); 
             }
 
-        s_Swerve.drive(new Rotation2d(), z, true, true);
+        //s_Swerve.drive(new Rotation2d(), z, true, true);
         
         /*if(s_Swerve.gyro.getRoll() == -0.1){
             s_Swerve.drive(new Translation2d(x,0), 0, true, true); 

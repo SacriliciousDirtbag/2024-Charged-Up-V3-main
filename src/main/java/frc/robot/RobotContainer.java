@@ -37,6 +37,7 @@ import frc.robot.subsystems.IntakeSubsystem;
 import frc.robot.subsystems.Swerve;
 import frc.robot.subsystems.cameraSubsystem;
 import frc.robot.subsystems.photonSubsystem;
+import frc.robot.subsystems.poseEstimator;
 import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.cameraSubsystem;
 
@@ -159,7 +160,9 @@ public class RobotContainer {
     public final LEDSubsystem s_lightSubsystem = new LEDSubsystem();
 
     //PHOTON
-    public final photonSubsystem s_PhotonSubsystem = new photonSubsystem(); //TODO: Finish
+    private final PhotonCamera photonCam = new PhotonCamera("PhotonCamera1");
+    public final poseEstimator s_PoseEstimator = new poseEstimator(photonCam, s_Swerve);
+    public final photonSubsystem s_PhotonSubsystem = new photonSubsystem(s_Swerve, s_Swerve:: getPose); //TODO: Finish
 
     public final Command m_leftCommand = new left(s_Swerve);
     public final Command m_middleCommand = new middle(s_Swerve);
@@ -190,11 +193,10 @@ public class RobotContainer {
     final static TrapezoidProfile.Constraints thContraints = new TrapezoidProfile.Constraints(Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond, Constants.AutoConstants.kMaxAngularSpeedRadiansPerSecond);
 
     public final PhotonSwerve m_photonCommand = new PhotonSwerve(
-        new photonSubsystem(s_Swerve), 
-        new ProfiledPIDController(Constants.AutoConstants.kp, 0, 0, xContraints), 
-        new ProfiledPIDController(Constants.AutoConstants.kp, 0, 0, yContraints), 
+        s_PhotonSubsystem, 
+        new ProfiledPIDController(Constants.AutoConstants.kPXController, 0, 0, xContraints), 
+        new ProfiledPIDController(Constants.AutoConstants.kPYController, 0, 0, yContraints), 
         new ProfiledPIDController(Constants.AutoConstants.kPThetaController, 0, 0, thContraints), 
-        s_Swerve::getPose,
         s_Swerve);
 
 

@@ -40,16 +40,6 @@ import frc.robot.Constants.cameraSettings;
 public class PhotonSwerve extends Command{
     PIDController movementController;
     photonSubsystem camera;
-    
-    Pose2d robPose2d;
-    Pose3d robotPose;
-
-    //Tag ID
-    private static final int TAG_TO_CHASE = 3;
-    private static final Transform3d TAG_TO_GOAL = 
-      new Transform3d(
-          new Translation3d(1.5, 0.0, 0.0),
-          new Rotation3d(0.0, 0.0, Math.PI));
 
     ProfiledPIDController xPidController;
     ProfiledPIDController yPidController;
@@ -60,11 +50,14 @@ public class PhotonSwerve extends Command{
     private PhotonTrackedTarget lastTarget;
     private Swerve swerve;
 
+    Pose2d robotPose1;
+    Pose2d goalPose;
+    Pose3d robotPose;
+
     public PhotonSwerve(photonSubsystem camera, ProfiledPIDController xController,
-     ProfiledPIDController yController, ProfiledPIDController thController, Supplier<Pose2d> ps, Swerve Swerve)  
+     ProfiledPIDController yController, ProfiledPIDController thController, Swerve Swerve)  
     {
         this.camera = camera;
-        this.poseSupplier = ps;
         this.swerve = Swerve;
 
         this.xPidController = xController;
@@ -82,94 +75,69 @@ public class PhotonSwerve extends Command{
     @Override
     public void initialize() 
     {
-        lastTarget = null;
-        var robotPose = poseSupplier.get();
-        thController.reset(robotPose.getRotation().getRadians());
-        xPidController.reset(robotPose.getX());
-        yPidController.reset(robotPose.getY());
+        robotPose1 = camera.getRobot1Pose();
+        thController.reset(robotPose1.getRotation().getRadians());
+        xPidController.reset(robotPose1.getX());
+        yPidController.reset(robotPose1.getY());
     }
 
     @Override 
     public void execute()
     {
-        var robotPose2d = poseSupplier.get();
-        var robotPose = new Pose3d(
-            robotPose2d.getX(),
-            robotPose2d.getY(), 
-            0.0, 
-            new Rotation3d(0.0, 0.0, robotPose2d.getRotation().getDegrees())
-        );
+        goalPose = camera.getGoalPose();
+        robotPose = camera.getRobotPose();
+        robotPose1 = camera.getRobotPose2d();
+        // Drive
+        xPidController.setGoal(goalPose.getX());
+        yPidController.setGoal(goalPose.getY());
+        thController.setGoal(goalPose.getRotation().getRadians());
 
-        var photonRes = camera.getLatestResult();
-        if (photonRes.hasTargets()) {
-          // Find the tag we want to chase
-          var targetOpt = photonRes.getTargets().stream()
-              .filter(t -> t.getFiducialId() == TAG_TO_CHASE)
-              .filter(t -> !t.equals(lastTarget) && t.getPoseAmbiguity() <= .2 && t.getPoseAmbiguity() != -1)
-              .findFirst();
-          if (targetOpt.isPresent()) {
-            var target = targetOpt.get();
-            // This is new target data, so recalculate the goal
-            lastTarget = target;
-            
-            // Transform the robot's pose to find the camera's pose
-            var cameraPose = robotPose.transformBy(cameraSettings.ROBOT_TO_CAMERA);
-    
-            // Trasnform the camera's pose to the target's pose
-            var camToTarget = target.getBestCameraToTarget();
-            var targetPose = cameraPose.transformBy(camToTarget);
-            
-            // Transform the tag's pose to set our goal
-            var goalPose = targetPose.transformBy(TAG_TO_GOAL).toPose2d();
-    
-            // Drive
-            xPidController.setGoal(goalPose.getX());
-            yPidController.setGoal(goalPose.getY());
-            thController.setGoal(goalPose.getRotation().getRadians());
-
-            double xSpeed = xPidController.calculate(robotPose.getX());
-            if (xPidController.atGoal()) {
-              xSpeed = 0;
-            }
-      
-            double ySpeed = yPidController.calculate(robotPose.getY());
-            if (yPidController.atGoal()) {
-              ySpeed = 0;
-            }
-      
-            double omegaSpeed = thController.calculate(robotPose2d.getRotation().getRadians());
-            if (thController.atGoal()) {
-              omegaSpeed = 0;
-            }
-      
-
-
-            ChassisSpeeds desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed,ySpeed,omegaSpeed,robotPose2d.getRotation());
-            SwerveModuleState[] modStates =  Constants.Swerve.swerveKinematics.toSwerveModuleStates(desiredChassisSpeeds);
-
-
-                 // Set the swerve module states
-    if (desiredChassisSpeeds != null) {
-        var currentStates = swerve.getModulePositions();
-        var desiredStates = Constants.Swerve.swerveKinematics.toSwerveModuleStates(desiredChassisSpeeds);
-  
-        if(desiredChassisSpeeds.vxMetersPerSecond == 0.0 && desiredChassisSpeeds.vyMetersPerSecond == 0.0
-            && desiredChassisSpeeds.omegaRadiansPerSecond == 0.0) {
-          // Keep the wheels at their current angle when stopped, don't snap back to straight
-          IntStream.range(0, currentStates.length).forEach(i -> desiredStates[i].angle = currentStates[i].angle);
+        double xSpeed = xPidController.calculate(robotPose.getX());
+        if (xPidController.atGoal()) {
+            xSpeed = 0;
         }
-  
-        SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.AutoConstants.kMaxSpeedMetersPerSecond);
-        swerve.setModStates(modStates);
-        // SwerveModulePosition[] newMods =  swerve.getModulePositions();
-      }
-      desiredChassisSpeeds = null;
-          }
 
-          
+        double ySpeed = yPidController.calculate(robotPose.getY());
+        if (yPidController.atGoal()) {
+            ySpeed = 0;
+        }
+
+        double omegaSpeed = thController.calculate(robotPose1.getRotation().getRadians());
+        if (thController.atGoal()) {
+            omegaSpeed = 0;
         }
 
 
-     
+        ChassisSpeeds desiredChassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed,ySpeed,omegaSpeed,robotPose1.getRotation());
+
+        // Set the swerve module states
+        if (desiredChassisSpeeds != null) {
+            var currentStates = swerve.getModulePositions();
+            var desiredStates = Constants.Swerve.swerveKinematics.toSwerveModuleStates(desiredChassisSpeeds);
+    
+            if(desiredChassisSpeeds.vxMetersPerSecond == 0.0 && desiredChassisSpeeds.vyMetersPerSecond == 0.0
+                && desiredChassisSpeeds.omegaRadiansPerSecond == 0.0) {
+            // Keep the wheels at their current angle when stopped, don't snap back to straight
+            IntStream.range(0, currentStates.length).forEach(i -> desiredStates[i].angle = currentStates[i].angle);
+            }
+
+            SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates, Constants.AutoConstants.kMaxSpeedMetersPerSecond);
+            swerve.setModStates(desiredStates);
+            // SwerveModulePosition[] newMods =  swerve.getModulePositions();
+        }
+        desiredChassisSpeeds = null;
+    } 
+
+    @Override
+    public void end(boolean isFinished)
+    {
+        SwerveModuleState[] stop = new SwerveModuleState[4];
+        for(int i = 0; i < stop.length; i++)
+        {
+            stop[i] = new SwerveModuleState();
+        }
+        swerve.setModStates(stop);
     }
 }
+
+

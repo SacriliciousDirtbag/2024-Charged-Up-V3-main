@@ -46,7 +46,7 @@ public class NewAutoBalance extends CommandBase {
   @Override
   public void end(boolean interrupted) {
     swerve.drive(new Translation2d(0, 0), 0, true, true);
-    swerve.drive(new Rotation2d(), 45, true, true);  
+    //swerve.drive(new Rotation2d(), 45, true, true);  
   }
 
   // Returns true when the command should end.
