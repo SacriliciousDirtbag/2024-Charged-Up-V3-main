@@ -1,5 +1,7 @@
 package frc.robot.commands;
 
+import static edu.wpi.first.math.util.Units.degreesToRadians;
+
 import java.util.ArrayList;
 import java.util.function.Supplier;
 
@@ -75,6 +77,7 @@ public class PhotonSwerve extends Command{
     @Override
     public void initialize() 
     {
+        swerve.zeroGyro();
         robotPose1 = camera.getRobot1Pose();
         thController.reset(robotPose1.getRotation().getRadians());
         xPidController.reset(robotPose1.getX());
